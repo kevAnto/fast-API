@@ -4,45 +4,57 @@
 name: Fast-API CI
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
-  build-push-container:
+  test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: | 
-        docker build -t kevanto/fast-api:${GITHUB_SHA} .
-        docker tag  kevanto/fast-api:${GITHUB_SHA} kevanto/fast-api:latest
-        docker images
-        docker run -d -p 80:80 --name fastapi kevanto/fast-api:${GITHUB_SHA}
-        sleep 10
-        docker login -u ${{ secrets.REGISTRY_USER  }} -p ${{ secrets.REGISTRY_PASSWD  }}
-        docker push kevanto/fast-api:${GITHUB_SHA}
-        docker push kevanto/fast-api:latest
+      - uses: actions/checkout@v3
+      - name: Test python Code
+        run: |
+          pip3 install -r requirements.txt
+          pip3 install pytest
+          cd app/
+          pytest
+
+  build-push-container:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+        run: |
+          docker build -t kevanto/fast-api:${GITHUB_SHA} .
+          docker tag  kevanto/fast-api:${GITHUB_SHA} kevanto/fast-api:latest
+          docker images
+          docker run -d -p 80:80 --name fastapi kevanto/fast-api:${GITHUB_SHA}
+          sleep 10
+          docker login -u ${{ secrets.REGISTRY_USER  }} -p ${{ secrets.REGISTRY_PASSWD  }}
+          docker push kevanto/fast-api:${GITHUB_SHA}
+          docker push kevanto/fast-api:latest
 
   deploy:
     needs: build-push-container
     name: deploy
     runs-on: ubuntu-latest
     steps:
-    - name: executing remote ssh commands using password
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOSTNAME  }}
-        username: ${{ secrets.USER_NAME  }}
-        key: ${{ secrets.AWS_PRIVATE_KEY  }}
-        port: 22
-        script: |
-          sudo docker rm -f fastapi 
-          sudo docker rmi kevanto/fast-api:latest
-          sleep 10 
-          sudo docker run -d -p 9000:80 --name fastapi kevanto/fast-api:latest
-          sudo docker ps 
-          sleep 10 
-          curl localhost:9000
-          ls 
-          sudo docker images
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOSTNAME  }}
+          username: ${{ secrets.USER_NAME  }}
+          key: ${{ secrets.AWS_PRIVATE_KEY  }}
+          port: 22
+          script: |
+            sudo docker rm -f fastapi 
+            sudo docker rmi kevanto/fast-api:latest
+            sleep 10 
+            sudo docker run -d -p 9000:80 --name fastapi kevanto/fast-api:latest
+            sudo docker ps 
+            sleep 10 
+            curl localhost:9000
+            ls 
+            sudo docker images
