@@ -8,4 +8,4 @@ client = TestClient(app)
 def test_read_main():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"msg": "Thanks you LOVA"}
+    assert response.json() == {"msg": "NOV23 BDO INT - MC1 - Introduction to DevOps"}
