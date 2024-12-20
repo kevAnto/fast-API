@@ -9,8 +9,19 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test python Code
+        run: |
+          pip3 install -r requirements.txt
+          pip3 install pytest
+          cd app/
+          pytest
+
   build-push-container:
-    #needs: test
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
