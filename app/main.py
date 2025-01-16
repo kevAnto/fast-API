@@ -5,6 +5,6 @@ app = FastAPI()
 @app.get("/")
 async def read_main():
 
-    return {"msg": "Thank you Franck"}
+    return {"msg": "MC Over"}
 
 
