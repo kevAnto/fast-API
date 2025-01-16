@@ -55,5 +55,5 @@ jobs:
             sudo docker ps 
             sleep 10 
             curl localhost:9000
-            ls 
+            ls -l
             sudo docker images
